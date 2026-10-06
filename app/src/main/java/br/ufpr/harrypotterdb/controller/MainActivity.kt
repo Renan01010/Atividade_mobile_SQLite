@@ -1,0 +1,74 @@
+package br.ufpr.harrypotterdb.controller
+
+import android.os.Bundle
+import android.widget.ListView
+import android.widget.TextView
+import android.widget.ArrayAdapter
+import android.content.Intent
+import android.view.View
+import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
+import br.ufpr.harrypotterdb.R
+import br.ufpr.harrypotterdb.data.dao.HPCharDAO
+import br.ufpr.harrypotterdb.model.HPChar
+
+class MainActivity : AppCompatActivity() {
+    private lateinit var hpCharDAO: HPCharDAO
+    private lateinit var listView: ListView
+    private lateinit var emptyTextView: TextView
+
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
+        setContentView(R.layout.activity_main)
+
+        listView = findViewById(R.id.lvChars)
+        emptyTextView = findViewById(R.id.tvEmpty)
+        hpCharDAO = HPCharDAO(this)
+
+        listAllChars()
+
+        // Listener para clicar nos itens da lista e abrir a tela de detalhes
+        listView.setOnItemClickListener { parent, view, position, id ->
+            val selectedChar = parent.getItemAtPosition(position) as HPChar
+            val intent = Intent(this, NewHPChar::class.java).apply {
+                putExtra("charID", selectedChar.id)
+            }
+            startActivity(intent)
+        }
+
+//        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main)) { v, insets ->
+//            val systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+//            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom)
+//            insets
+//        }
+    }
+
+    private fun listAllChars() {
+        val hpChars = hpCharDAO.getAllChars()
+        if (hpChars.isEmpty()) {
+            listView.visibility = ListView.GONE
+            emptyTextView.visibility = TextView.VISIBLE
+        } else {
+            listView.visibility = ListView.VISIBLE
+            emptyTextView.visibility = TextView.GONE
+            val adapter: ArrayAdapter<HPChar> = ArrayAdapter(
+                this, android.R.layout.simple_list_item_1, hpChars
+            )
+            listView.adapter = adapter
+        }
+    }
+
+    fun newChar(view: View){
+        val intent = Intent(this, NewHPChar::class.java)
+        startActivity(intent)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        listAllChars() // Atualiza a lista quando a atividade é retomada
+    }
+}
